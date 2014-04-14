@@ -4,17 +4,17 @@
 <!--
   * @file plugins/generic/article2Repo/locale/en_US/locale.xml
   *
-  * EJME plugin localization strings for the en_US (U.S. English) locale.
+  * Article2Repo plugin localization strings for the en_US (U.S. English) locale.
   -->
  
 <locale name="en_US" full_name="U.S. English">
-	<message key="plugins.generic.ejme.displayName">EJME - Enhanced Journals Made Easy</message>
-	<message key="plugins.generic.ejme.description">The EJME plugin promotes the use of "enhanced publications", through the option of a SWORD-connection to an external repository for supplementary files.</message>
+	<message key="plugins.generic.ejme.displayName">Article2Repo</message>
+	<message key="plugins.generic.ejme.description">The Article2Repo plugin promotes the use of "enhanced publications", through the option of a SWORD-connection to an external repository for supplementary files.</message>
 	<message key="plugins.generic.ejme.settings">Settings</message>
-	<message key="plugins.generic.ejme.enabled">EJME Plugin has been enabled</message>
-	<message key="plugins.generic.ejme.disabled">EJME Plugin has been disabled</message>
+	<message key="plugins.generic.ejme.enabled">Article2Repo Plugin has been enabled</message>
+	<message key="plugins.generic.ejme.disabled">Article2Repo Plugin has been disabled</message>
 
-	<message key="plugins.generic.ejme.metadata">EJME Plugin: choose storage location</message>
+	<message key="plugins.generic.ejme.metadata">Article2Repo Plugin: choose storage location</message>
 	<message key="plugins.generic.ejme.ejme_dans0">Keep this supplement local</message>
 	<message key="plugins.generic.ejme.ejme_dans1">Deposit to </message>
 	<message key="plugins.generic.ejme.ejme_dans2">Residing at </message>
@@ -36,7 +36,7 @@
 	<message key="plugins.generic.ejme.ejme_verify">Verify</message>
 	<message key="plugins.generic.ejme.ejme_verify.confirm">Fill this form with the metadata from external repository?</message>
 
-	<message key="plugins.generic.ejme.depositForm">EJME Deposit Point settings</message>
+	<message key="plugins.generic.ejme.depositForm">Article2Repo Deposit Point settings</message>
 	<message key="plugins.generic.ejme.depositName">Repository nickname</message>
 	<message key="plugins.generic.ejme.depositName.description">E.g. the (abbrev) name of the institute</message>
 	<message key="plugins.generic.ejme.depositUrl">Deposit Point URL</message>
