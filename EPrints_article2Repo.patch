@@ -1,0 +1,303 @@
+diff -Naur old/perl_lib/EPrints/Plugin/Sword/Import/EPrintsXML.pm new/perl_lib/EPrints/Plugin/Sword/Import/EPrintsXML.pm
+--- old/perl_lib/EPrints/Plugin/Sword/Import/EPrintsXML.pm	2013-09-13 14:28:59.000000000 +0100
++++ new/perl_lib/EPrints/Plugin/Sword/Import/EPrintsXML.pm	2013-09-13 14:29:31.000000000 +0100
+@@ -70,7 +70,6 @@
+ 
+         my $session = $plugin->{session};
+ 
+-
+         my $files = $opts{files};
+         my $dir = $opts{dir};
+ 
+@@ -83,6 +82,9 @@
+         my $owner_id = $opts{owner_id};
+         my $depositor_id = $opts{depositor_id};
+ 
++	#RM adds file tracking
++        $plugin->{files} = $files;
++
+         my $ds = $session->get_archive()->get_dataset( $dataset_id );
+ 
+         my $fh;
+@@ -215,10 +217,10 @@
+         my $epdata = {};
+         foreach my $fn ( keys %toprocess )
+         {
+-		next if $fn eq 'eprintid';
++		#RM let EPrints get updated
++#		next if $fn eq 'eprintid';
+ 
+                 my $field = $dataset->get_field( $fn );
+-
+                 $epdata->{$fn} = $plugin->xml_field_to_epdatafield( $dataset, $field, $toprocess{$fn} );
+         }
+         return $epdata;
+@@ -351,6 +353,7 @@
+ #       #       {
+ #       #               return $plugin->xml_field_to_data_single( $dataset,$field,$xml );
+ #       #       }
++
+        return $plugin->xml_field_to_data_basic( $dataset, $field, $xml );
+ }
+                
+@@ -472,9 +475,12 @@
+ 			if(scalar @{$self->{imported}} < 1)
+ 			{	
+ 				push @{$self->{imported}}, $item->get_id;
++				#RM Commit the doc
++				for my $doc($item->get_all_documents){
++					$doc->commit();	
++				}
+ 			} 
+ 		}
+-
+ 		# don't keep tmpfiles between items...
+ 		foreach( @{$self->{tmpfiles}} )
+ 		{
+@@ -499,6 +505,30 @@
+ 				$self->{plugin}->{session}->make_text( $tmpfile ) );
+ 			delete $self->{basedata};
+ 		}
++		#RM This bit will use the <doc><file> bit of the eprints XMl to check in the sword package for the file...
++		# check for filename matches in any other files in the attached zip archive...
++		if($node_info->{Name} eq "url" || $node_info->{Name} eq "data" ){            
++		     	$self->{plugin}->{session}->get_repository->log("Node Name: ".$node_info->{Name});
++			for my $file (@{$self->{plugin}->{files}}){
++	                       	$self->{plugin}->{session}->get_repository->log("file: $file");
++                        	my $url_str = quotemeta $self->{xmlcurrent}->textContent;
++	                       	$self->{plugin}->{session}->get_repository->log("url_str: $url_str");
++                                if($file =~ /.*\/$url_str$/){
++					my $new_node;
++					if($node_info->{Name} eq "url"){
++						$new_node = $self->{plugin}->{session}->make_element("url");
++						$new_node->appendChild($self->{plugin}->{session}->make_text($file));
++
++					}else{
++						$new_node = $self->{plugin}->{session}->make_element("data");
++						$new_node->appendChild($self->{plugin}->{session}->make_text($file));
++					}
++					$self->{xmlcurrent}->parentNode->replaceChild($new_node,$self->{xmlcurrent});
++
++                                }
++			}
++		}
++
+ 		pop @{$self->{xmlstack}};
+ 		
+ 		$self->{xmlcurrent} = $self->{xmlstack}->[-1]; # the end!
+diff -Naur old/perl_lib/EPrints/Sword/DepositHandler.pm new/perl_lib/EPrints/Sword/DepositHandler.pm
+--- old/perl_lib/EPrints/Sword/DepositHandler.pm	2013-09-13 14:25:50.000000000 +0100
++++ new/perl_lib/EPrints/Sword/DepositHandler.pm	2013-09-13 14:27:00.000000000 +0100
+@@ -159,6 +159,13 @@
+ 		push @$postdata, $session->{query}->param( 'POSTDATA' );
+ 	}
+ 			
++	#RM to let cURL work
++        if( !defined $postdata || scalar @$postdata < 1 )
++        {
++                push @$postdata, $session->{query}->param();
++        }	
++
++
+         if( !defined $postdata || scalar @$postdata < 1 )
+         {
+ 		$request->headers_out->{'X-Error-Code'} = 'ErrorBadRequest';
+@@ -231,6 +238,11 @@
+ 		return Apache2::Const::DONE;
+ 	}
+ 
++	#RM adds overides to allow local files and updates and useful stuff (possibly not very sword)
++	$session->get_repository->{config}->{enable_file_imports} = $session->get_repository->get_conf( "sword", "enable_file_imports" );
++	$session->get_repository->{config}->{enable_web_imports} = $session->get_repository->get_conf( "sword", "enable_web_imports" );
++	$session->get_repository->{config}->{enable_import_ids} = $session->get_repository->get_conf( "sword", "enable_import_ids" );
++
+ 	
+ 	# Check if we're doing a direct import. In this case, no need to unpack the file.
+ 	my $direct_import = $unpack_pluginid->{direct_import};
+@@ -279,8 +291,8 @@
+ 	        }
+ 
+ 	}
+-
+-        my $import_plugin = $session->plugin( $import_pluginid );
++	#RM set update to 1
++        my $import_plugin = $session->plugin( $import_pluginid , update=>1 );
+ 
+ 	if(!defined $import_plugin)
+ 	{
+@@ -331,7 +343,8 @@
+ 	my $keep_deposited_file = 1;
+ 
+ 	# Unless we are doing a direct import of the file, or it is disabled in the conf file
+-	if($direct_import || (defined $session->get_repository->get_conf( "sword", "keep_deposited_file" ) && $session->get_repository->get_conf( "sword", "keep_deposited_file" ) == 0)) 
++	# RM The config setting is files not file! (sloppy)
++	if($direct_import || (defined $session->get_repository->get_conf( "sword", "keep_deposited_files" ) && $session->get_repository->get_conf( "sword", "keep_deposited_files" ) == 0)) 
+ 	{
+ 		$keep_deposited_file = 0;
+ 	}
+@@ -382,6 +395,9 @@
+ 	$xml_opts{eprint} = $eprint;
+ 	$xml_opts{headers} = $headers;
+ 	$xml_opts{sword_treatment} = $sword_treatment;
++	
++	#RM adds unpack dir if available
++	$xml_opts{dir} = $tmp_dir if(defined $tmp_dir);
+ 
+ 	$xml_opts{owner} = $owner;
+ 	$xml_opts{depositor} = $depositor if( defined $depositor );
+@@ -567,14 +583,26 @@
+ 
+ 
+ 	# EDIT-MEDIA
+-        my $link1 = $session->make_element( "link", "rel" => "edit-media",
+-						"href" => $collec_url.$epid ); 
+-       $entry->appendChild( $link1 );
+-
+-	# EDIT
+-        my $link2 = $session->make_element( "link", "rel" => "edit",
+-						"href" => $collec_url.$epid.".atom" );
+-        $entry->appendChild( $link2 );
++	#RM adds references to actual content doc->url will return a reference to the main file of the last doc (likely to only be one)
++	if(defined $opts{dir}){
++		my $tmp_dir = $opts{dir};
++
++		my @documents = $eprint->get_all_documents();
++		for my $doc (@documents){
++			my $file = $doc->get_url();
++			my $c_type = $doc->get_value("format");
++			my $link = $session->make_element( "link", "rel" => "part", type => $c_type, "href" => $file );
++			$entry->appendChild($link);
++		}	                                                                                                                       }
++#	# EDIT-MEDIA
++#        my $link1 = $session->make_element( "link", "rel" => "edit-media",
++#						"href" => $collec_url.$epid ); 
++#       $entry->appendChild( $link1 );
++
++# EDIT
++#        my $link2 = $session->make_element( "link", "rel" => "edit",
++#						"href" => $collec_url.$epid.".atom" );
++#        $entry->appendChild( $link2 );
+ 
+ 
+ 	# SOURCE GENERATOR 
+diff -Naur old/perl_lib/IRStats/GUI/get_view_raw.pm new/perl_lib/IRStats/GUI/get_view_raw.pm
+--- old/perl_lib/IRStats/GUI/get_view_raw.pm	1970-01-01 01:00:00.000000000 +0100
++++ new/perl_lib/IRStats/GUI/get_view_raw.pm	2013-09-16 17:39:00.000000000 +0100
+@@ -0,0 +1,117 @@
++package IRStats::GUI::get_view_raw;
++
++use strict;
++
++sub generate
++{
++	my( $self ) = @_;
++
++	my $session = $self->{session};
++
++	my $conf = $session->get_conf;
++
++	my $cgi = $session->cgi;
++
++	my $date_choice = $cgi->param('IRS_datechoice');
++	my $start_date;
++	my $end_date;
++	if ($date_choice eq 'period')
++	{
++		my $period = $cgi->param('period');
++		if ($period =~ /^-([0-9]+)m$/)
++		{
++			my $months = $1;
++			my $end_date_obj = IRStats::Date->new(); #defaults to yesterday;
++			my $start_date_obj = $end_date_obj->clone();
++			foreach (1 .. $months)
++			{
++				$start_date_obj->decrement('month');
++			}
++			$start_date_obj->increment('day');
++			$start_date = $start_date_obj->render('numerical');
++			$end_date = $end_date_obj->render('numerical');
++		}
++		elsif ($period =~ /^Q([0-9])([0-9]{4,4})/)
++		{
++			my ($quarter, $year) = ($1, $2);
++			$start_date = $year . sprintf( "%02d", ((($quarter-1) * 3) + 1) ) . '01';
++			$end_date = $year . sprintf( "%02d", ($quarter * 3) ) . '31';
++		}
++		else
++		{
++			Carp::confess "Invalid Period Data\n";
++		}
++	}
++	elsif ($date_choice eq 'range')
++	{
++		$start_date = sprintf("%04d%02d%02d",$cgi->param('start_year'),$cgi->param('start_month'),$cgi->param('start_day'));
++		$end_date = sprintf("%04d%02d%02d",$cgi->param('end_year'),$cgi->param('end_month'),$cgi->param('end_day'));
++	}
++	else
++	{
++		Carp::confess "Invalid Choice of Date: $date_choice\n";
++	}
++
++	my $sets = $conf->get_value( "set_ids" );
++
++	my $eprint_choice = $cgi->param('IRS_epchoice');
++	my $eprints;
++	if ($eprint_choice eq 'All')
++	{
++		$eprints = 'all';
++	}
++	elsif ($eprint_choice eq 'EPrint')
++	{
++		$eprints = 'eprint_' . $cgi->param('eprint');
++	}
++	elsif (grep { $_ eq $eprint_choice } @$sets)
++	{
++		$eprints = $cgi->param($eprint_choice."s");
++	}
++	else
++	{
++		Carp::confess "Invalid Choice of EPrint: $eprint_choice\n";
++	}
++
++	if(!$eprints)
++	{
++		Carp::confess "No choice made for [$eprint_choice]\n";
++	}
++
++	my $param_hash = { view => $cgi->param('view'), start_date => $start_date, end_date => $end_date, eprints => $eprints };
++
++
++	my $params = IRStats::Params->new($conf, $param_hash);
++
++	my $view_name = $params->get('view');
++
++	print $cgi->header('image/png');
++
++
++	my $flag = scalar grep { $_ eq $view_name } $session->get_views;
++
++	if ($flag)
++	{
++		my $view_name = 'IRStats::View::' . $view_name;
++		my $view = $view_name->new($params, $session->get_database);
++
++		$view->render();
++		my $img_file = $params->{conf}->get_path('graphs_path')."/".$view->get('visualisation')->get('filename');
++		
++		open(IMG,$img_file) or die("Could not open $img_file: $!");
++		binmode STDOUT;
++		binmode IMG;
++
++
++		while(<IMG>){
++			print $_;
++		}	
++		close IMG;
++	}
++	else
++	{
++		Carp::confess "Unrecognised view $view_name: available views are ".join(',',$session->get_views);
++	}
++}
++
++1;
