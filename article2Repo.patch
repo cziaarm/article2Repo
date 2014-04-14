@@ -1,0 +1,74 @@
+diff -ur ojs-clean/ojs-2.3.5/pages/editor/index.php ojs-fresh/ojs-2.3.5/pages/editor/index.php
+--- pages/editor/index.php	2011-05-31 21:04:41.000000000 +0100
++++ pages/editor/index.php	2013-09-03 12:14:37.000000000 +0100
+@@ -136,6 +136,10 @@
+ 	case 'scheduleForPublication':
+ 	case 'setDatePublished':
+ 	//
++	// #RM adds Deposit function(s)
++	//
++	case 'depositFileInRepo':
++	//
+ 	// Payments
+ 	//
+ 	case 'waiveSubmissionFee':
+diff -ur ojs-clean/ojs-2.3.5/pages/sectionEditor/index.php ojs-fresh/ojs-2.3.5/pages/sectionEditor/index.php
+--- pages/sectionEditor/index.php	2011-05-31 21:04:41.000000000 +0100
++++ pages/sectionEditor/index.php	2013-09-02 16:02:29.000000000 +0100
+@@ -135,6 +135,10 @@
+ 	//
+ 	case 'scheduleForPublication':
+ 	case 'setDatePublished':
++	//
++	// #RM adds Deposit function(s)
++	//
++	case 'depositFileInRepo':
+ 	 //
+ 	 // Payments
+ 	 //
+@@ -170,6 +174,7 @@
+ 		define('HANDLER_CLASS', 'SectionEditorHandler');
+ 		import('pages.sectionEditor.SectionEditorHandler');
+ 		break;
++
+ }
+ 
+ ?>
+diff -ur ojs-clean/ojs-2.3.5/pages/sectionEditor/SubmissionEditHandler.inc.php ojs-fresh/ojs-2.3.5/pages/sectionEditor/SubmissionEditHandler.inc.php
+--- pages/sectionEditor/SubmissionEditHandler.inc.php	2011-05-31 21:04:41.000000000 +0100
++++ pages/sectionEditor/SubmissionEditHandler.inc.php	2013-09-10 14:41:39.000000000 +0100
+@@ -259,6 +259,7 @@
+ 	}
+ 
+ 	function submissionEditing($args) {
++
+ 		$articleId = isset($args[0]) ? (int) $args[0] : 0;
+ 		$this->validate($articleId, SECTION_EDITOR_ACCESS_EDIT);
+ 		$journal =& Request::getJournal();
+@@ -2328,6 +2329,15 @@
+ 			Request::redirect(null, null, 'submissionEditing', $articleId);
+ 		}
+ 	}
++	/**
++	 *
++	 * RM adds a deposit method in here... it calls hook to plugin.... would love to get this done less intrusively
++	 *
++	 */
++	function depositFileInRepo($args, $request){
++		$articleId = (int) array_shift($args);
++		HookRegistry::call('SubmissionEditHandler::depositFileInRepo', array(&$this, &$articleId, &$request));
++	}
+ 
+ 	/**
+ 	 * Schedule/unschedule an article for publication.
+diff -ur ojs-clean/ojs-2.3.5/templates/sectionEditor/submission/scheduling.tpl ojs-fresh/ojs-2.3.5/templates/sectionEditor/submission/scheduling.tpl
+--- templates/sectionEditor/submission/scheduling.tpl	2011-05-31 21:04:44.000000000 +0100
++++ templates/sectionEditor/submission/scheduling.tpl	2013-09-02 15:09:31.000000000 +0100
+@@ -88,4 +88,7 @@
+ 	</tr>
+ {/if}
+ </table>
++{if $publishedArticle}
++	{call_hook name="Templates::sectionEditor::Submission:Scheduling::SwordDepositForm"}
++{/if}
+ </div>

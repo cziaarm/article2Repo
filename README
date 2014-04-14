@@ -1,0 +1,17 @@
+Article 2 Repo Plugin for PKP-OJS software
+by Rory McNicholl 
+
+based on Ejme plugin
+
+Test on ojs 2.3.5 only
+
+Once installed using the OJS plugin installation interface you'll need to apply the patch like so:
+
+Apply the patch article2Repo.patch by going to the directory in which ojs is installed (eg /path/to/docroot/ojs) and running
+
+patch -p0 < plugins/generic/article2Repo.patch
+
+if need be you can reverse the patch like so:
+
+patch -R -p0 < plugins/generic/article2Repo.patch
+

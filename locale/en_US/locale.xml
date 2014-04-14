@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
+
+<!--
+  * @file plugins/generic/article2Repo/locale/en_US/locale.xml
+  *
+  * EJME plugin localization strings for the en_US (U.S. English) locale.
+  -->
+ 
+<locale name="en_US" full_name="U.S. English">
+	<message key="plugins.generic.ejme.displayName">EJME - Enhanced Journals Made Easy</message>
+	<message key="plugins.generic.ejme.description">The EJME plugin promotes the use of "enhanced publications", through the option of a SWORD-connection to an external repository for supplementary files.</message>
+	<message key="plugins.generic.ejme.settings">Settings</message>
+	<message key="plugins.generic.ejme.enabled">EJME Plugin has been enabled</message>
+	<message key="plugins.generic.ejme.disabled">EJME Plugin has been disabled</message>
+
+	<message key="plugins.generic.ejme.metadata">EJME Plugin: choose storage location</message>
+	<message key="plugins.generic.ejme.ejme_dans0">Keep this supplement local</message>
+	<message key="plugins.generic.ejme.ejme_dans1">Deposit to </message>
+	<message key="plugins.generic.ejme.ejme_dans2">Residing at </message>
+	<message key="plugins.generic.ejme.ejme_access.open">Open access</message>
+	<message key="plugins.generic.ejme.ejme_access.open.description">Unrestricted access for all registered EASY users</message>
+	<message key="plugins.generic.ejme.ejme_access.restricted">Restricted: request permission</message>
+	<message key="plugins.generic.ejme.ejme_access.restricted.description">Registered EASY users, but only after depositor permission is granted</message>
+	<message key="plugins.generic.ejme.ejme_access.no_access">Other access</message>
+	<message key="plugins.generic.ejme.ejme_access.no_access.description">The data are not available via EASY (they are either accessible in another way or elsewhere)</message>
+
+	<message key="plugins.generic.ejme.ejme_date_available">Date available (= embargo)</message>
+
+	<message key="plugins.generic.ejme.ejme_agree">Agreement to </message>
+	<message key="plugins.generic.ejme.ejme_agreement.title">Terms &amp; Conditions</message>
+	<message key="plugins.generic.ejme.ejme_urn">Persistent ID</message>
+	<message key="plugins.generic.ejme.ejme_link">Link</message>
+	<message key="plugins.generic.ejme.ejme_upload">Save &amp; Deposit</message>
+	<message key="plugins.generic.ejme.ejme_upload.confirm">Upload this supplement to external repository?</message>
+	<message key="plugins.generic.ejme.ejme_verify">Verify</message>
+	<message key="plugins.generic.ejme.ejme_verify.confirm">Fill this form with the metadata from external repository?</message>
+
+	<message key="plugins.generic.ejme.depositForm">EJME Deposit Point settings</message>
+	<message key="plugins.generic.ejme.depositName">Repository nickname</message>
+	<message key="plugins.generic.ejme.depositName.description">E.g. the (abbrev) name of the institute</message>
+	<message key="plugins.generic.ejme.depositUrl">Deposit Point URL</message>
+	<message key="plugins.generic.ejme.depositUrl.description"></message>
+	<message key="plugins.generic.ejme.ejme_discipline">Discipline (intended audience)</message>
+	<message key="plugins.generic.ejme.ejme_discipline.description">Currently, this field is specific to the Dutch repository institute DANS</message>
+	<message key="plugins.generic.ejme.terms">URL to the repository's Terms &amp; Conditions</message>
+	<message key="plugins.generic.ejme.terms.description"></message>
+
+	<message key="plugins.generic.ejme.ejme_external">Located at external repository.</message>
+	
+	<message key="plugins.generic.article2Repo.depositArticleTitle">Deposit this article at an external repository</message>
+</locale>
